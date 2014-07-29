@@ -73,3 +73,6 @@ The Renderer type has a custom FuncMap that is injected into every template. Use
             return fmt.Sprintf("Hello %s", name)
         },
     },
+
+## Disclaimer
+This is me experimenting and trying to make more use of go templates. I do NOT currently use this in production
