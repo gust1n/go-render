@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{{ if .Title }}{{ .Title }} - {{ end }} Go templates extends!</title>
+	{{ template "head" . }}
+</head>
+<body>
+{{ template "body" . }}
+</body>
+</html>
+
+{{/* default body */}}
+{{ define "body" }}
+<h1>Something went wrong!</h1>
+{{ end }}
