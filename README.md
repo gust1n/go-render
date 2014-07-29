@@ -10,6 +10,7 @@ Loosely based on https://github.com/daemonl/go_sweetpl
 
 ### Extends
 Just use the new "extends" keyword
+	
 	{{ extends "templates/layouts/fullwidth.html" }}
 
 	{{ define "content" }}
