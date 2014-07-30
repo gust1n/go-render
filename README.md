@@ -20,7 +20,7 @@ Just use the new "extends" keyword
 This will also work with multi-level support, e.g. 
 index.html ---extends---> layouts/fullwidth.html ---extends---> base.html
 
-Check out the examples folder for a more thorough example of this
+Check out the [examples](https://github.com/gust1n/go-render/tree/master/examples) folder for a more thorough example of this
 
 ### Overwriting define / default value
 Any "define" of the same "template" down the extend chain will overwrite the former content
@@ -32,7 +32,6 @@ base.html
 	<html>
 	  <head>
 	    <title>{{ template "title" }}</title>
-	    {{ template "style" }}
 	  </head>
 	</html>
 
@@ -46,7 +45,7 @@ profile.html
 This would produce panic in std lib parsing but now it works.
 
 ## Installation
-```go get ```
+```go get github.com/gust1n/go-render```
 
 ## Usage
     import "github.com/gust1n/go-render/render"
@@ -56,7 +55,7 @@ This would produce panic in std lib parsing but now it works.
     func main() {
     	// Now I can
     	rnd.ExecuteTemplate()
-    	// probably into a http handler
+    	// probably in a http handler
     }
 
     func init() {
@@ -74,3 +73,6 @@ The Renderer type has a custom FuncMap that is injected into every template. Use
             return fmt.Sprintf("Hello %s", name)
         },
     },
+
+## Disclaimer
+This is me experimenting and trying to make more use of go templates. I do NOT currently use this in production
