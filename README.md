@@ -7,6 +7,7 @@ Adds "extends" and overwriting "define" with the most specific content.
 Loosely based on https://github.com/daemonl/go_sweetpl
 
 ## Examples
+Check out the [examples](https://github.com/gust1n/go-render/tree/master/examples) folder for a more thorough examples
 
 ### Extends
 Just use the new "extends" keyword
@@ -18,9 +19,15 @@ Just use the new "extends" keyword
 	{{ end }}
 
 This will also work with multi-level support, e.g. 
-index.html ---extends---> layouts/fullwidth.html ---extends---> base.html
+```index.html ---extends---> layouts/fullwidth.html ---extends---> base.html```
 
-Check out the [examples](https://github.com/gust1n/go-render/tree/master/examples) folder for a more thorough example of this
+### Include
+Simple include functionality, the package simply replaces the include block with the content of the file
+
+    {{ define "content" }}
+        content of the fullwidth template
+        {{ include "includes/widgets/signup.html" }}
+    {{ end }}
 
 ### Overwriting define / default value
 Any "define" of the same "template" down the extend chain will overwrite the former content
