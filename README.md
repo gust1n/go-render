@@ -55,31 +55,30 @@ This would produce panic in std lib parsing but now it works.
 ```go get github.com/gust1n/go-render```
 
 ## Usage
-    import "github.com/gust1n/go-render/render"
-
-    var rnd *render.Renderer
+    import (
+        "github.com/gust1n/go-render/render"
+    )
 
     func main() {
-    	// Now I can
-    	rnd.ExecuteTemplate()
-    	// probably in a http handler
-    }
-
-    func init() {
-    	rnd = render.New()
-
-		rnd.LoadTemplates("my/template/path")
+        templates, err := render.Load("templates")
+        if err != nil {
+            panic(err)
+        }
+        // Now I have a map[string]*template.Template to use in my handlers
     }
 
 ### Custom FuncMap
 The Renderer type has a custom FuncMap that is injected into every template. Use it as such:
 
-	rnd = render.New()
-	rnd.FuncMap = template.FuncMap{
+	var tmplErr error
+    templates, tmplErr = render.LoadWithFuncMap("templates", template.FuncMap{
         "greet": func(name string) string {
             return fmt.Sprintf("Hello %s", name)
         },
-    },
+    })
+    if tmplErr != nil {
+        panic(tmplErr)
+    }
 
 ## Disclaimer
 This is me experimenting and trying to make more use of go templates. I do NOT currently use this in production
