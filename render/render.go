@@ -20,6 +20,7 @@ var ErrTmplNotFound = errors.New("template not found")
 var ErrTmplEmpty = errors.New("template is empty")
 
 type renderer struct {
+	basePath  string
 	templates map[string]*template.Template
 	funcMap   map[string]interface{} //template.funcMap
 }
@@ -58,7 +59,7 @@ func (r *renderer) add(stack *[]*namedTemplate, path string) error {
 	extendsMatches := re_extends.FindStringSubmatch(tplSrc)
 	if len(extendsMatches) == 2 {
 		// Perform recursion until no more extend's are found
-		err := r.add(stack, extendsMatches[1])
+		err := r.add(stack, filepath.Join(r.basePath, extendsMatches[1]))
 		if err != nil {
 			return err
 		}
@@ -180,13 +181,13 @@ func generateTemplateName(base, path string) string {
 
 // loadTemplates loads and parses all *.html templates in specified directory.
 // It also handles the recursive scan up the "extend"-chain
-func (r *renderer) loadTemplates(dirPath string) error {
+func (r *renderer) loadTemplates() error {
 	if r.templates == nil {
 		r.templates = make(map[string]*template.Template)
 	}
 
 	// Traverse the passed dir and parse all *.html templates
-	filepath.Walk(dirPath, func(path string, fi os.FileInfo, err error) error {
+	filepath.Walk(r.basePath, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -200,23 +201,24 @@ func (r *renderer) loadTemplates(dirPath string) error {
 			panic(err)
 		}
 
-		r.templates[generateTemplateName(dirPath, path)] = tmpl
+		r.templates[generateTemplateName(r.basePath, path)] = tmpl
 		return nil
 	})
 
 	return nil
 }
 
-func new() *renderer {
+func new(basePath string) *renderer {
 	return &renderer{
+		basePath:  basePath,
 		templates: make(map[string]*template.Template),
 	}
 }
 
 // Load prepares and parses all templates from the passed basePath
-func Load(path string) (map[string]*template.Template, error) {
-	rnd := new()
-	if err := rnd.loadTemplates(path); err != nil {
+func Load(basePath string) (map[string]*template.Template, error) {
+	rnd := new(basePath)
+	if err := rnd.loadTemplates(); err != nil {
 		return nil, err
 	}
 
@@ -225,11 +227,11 @@ func Load(path string) (map[string]*template.Template, error) {
 
 // LoadWithFuncMap prepares and parses all templates from the passed basePath and injects
 // a custom template.FuncMap into each template
-func LoadWithFuncMap(path string, funcMap template.FuncMap) (map[string]*template.Template, error) {
-	rnd := new()
+func LoadWithFuncMap(basePath string, funcMap template.FuncMap) (map[string]*template.Template, error) {
+	rnd := new(basePath)
 	rnd.funcMap = funcMap
 
-	if err := rnd.loadTemplates(path); err != nil {
+	if err := rnd.loadTemplates(); err != nil {
 		return nil, err
 	}
 

@@ -12,7 +12,7 @@ var templates map[string]*template.Template
 
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if err := templates["index.html"].Execute(w, map[string]interface{}{"Title": "Home"}); err != nil {
+		if err := templates["pages/index.html"].Execute(w, map[string]interface{}{"Title": "Home"}); err != nil {
 			log.Println(err)
 		}
 	})
@@ -22,7 +22,7 @@ func main() {
 
 func init() {
 	var tmplErr error
-	if templates, tmplErr = render.Load("templates/pages"); tmplErr != nil {
+	if templates, tmplErr = render.Load("templates"); tmplErr != nil {
 		panic(tmplErr)
 	}
 }
