@@ -68,7 +68,7 @@ func (r *renderer) add(stack *[]*namedTemplate, path string) error {
 	}
 
 	// Add included files
-	tplSrc = addIncluded(tplSrc)
+	tplSrc = r.addIncluded(tplSrc)
 
 	// Add template to the stack
 	*stack = append((*stack), &namedTemplate{
@@ -79,7 +79,7 @@ func (r *renderer) add(stack *[]*namedTemplate, path string) error {
 }
 
 // addIncluded recursively checks for include blocks and simply includes the file content
-func addIncluded(src string) string {
+func (r *renderer) addIncluded(src string) string {
 	includedMatches := re_includeTag.FindStringSubmatch(src)
 	if len(includedMatches) < 2 {
 		return src
@@ -90,7 +90,7 @@ func addIncluded(src string) string {
 		parsed := re_includeTag.FindStringSubmatch(raw)
 		includePath := parsed[1]
 
-		content, err := file_content(includePath)
+		content, err := file_content(filepath.Join(r.basePath, includePath))
 		if err != nil {
 			panic(err)
 		}
@@ -98,7 +98,7 @@ func addIncluded(src string) string {
 		return content
 	})
 
-	return addIncluded(src)
+	return r.addIncluded(src)
 }
 
 func (r *renderer) assemble(path string) (*template.Template, error) {
