@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,6 +16,7 @@ import (
 var re_extends *regexp.Regexp = regexp.MustCompile("{{ extends [\"']?([^'\"}']*)[\"']? }}")
 var re_defineTag *regexp.Regexp = regexp.MustCompile("{{ ?define \"([^\"]*)\" ?\"?([a-zA-Z0-9]*)?\"? ?}}")
 var re_templateTag *regexp.Regexp = regexp.MustCompile("{{ ?template \"([^\"]*)\" ?([^ ]*)? ?}}")
+var re_includeTag *regexp.Regexp = regexp.MustCompile("{{ ?include \"([^\"]*)\" ?([^ ]*)? ?}}")
 
 var ErrTmplNotFound = errors.New("template not found")
 var ErrTmplEmpty = errors.New("template is empty")
@@ -31,26 +31,34 @@ type namedTemplate struct {
 	Src  string
 }
 
-func (r *Renderer) add(stack *[]*namedTemplate, path string) error {
+func file_content(path string) (string, error) {
 	// Read the file content of the template
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	b, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
+		return "", err
 	}
-	tplSrc := string(b)
+	s := string(b)
 
-	if len(tplSrc) < 1 {
-		return ErrTmplEmpty
+	if len(s) < 1 {
+		return "", ErrTmplEmpty
+	}
+
+	return s, nil
+}
+
+func (r *Renderer) add(stack *[]*namedTemplate, path string) error {
+	tplSrc, err := file_content(path)
+	if err != nil {
+		return err
 	}
 
 	// Check if template contains "extend" keyword
 	extendsMatches := re_extends.FindStringSubmatch(tplSrc)
 	if len(extendsMatches) == 2 {
-		log.Println("found extend", extendsMatches[1])
 		// Perform recursion until no more extend's are found
 		err := r.add(stack, extendsMatches[1])
 		if err != nil {
@@ -59,12 +67,39 @@ func (r *Renderer) add(stack *[]*namedTemplate, path string) error {
 		// Remove the extend code
 		tplSrc = re_extends.ReplaceAllString(tplSrc, "")
 	}
+
+	// Add included files
+	tplSrc = addIncluded(tplSrc)
+
 	// Add template to the stack
 	*stack = append((*stack), &namedTemplate{
 		Name: path,
 		Src:  tplSrc,
 	})
 	return nil
+}
+
+// addIncluded recursively checks for include blocks and simply includes the file content
+func addIncluded(src string) string {
+	includedMatches := re_includeTag.FindStringSubmatch(src)
+	if len(includedMatches) < 2 {
+		return src
+	}
+
+	// Check if template contains "include" block
+	src = re_includeTag.ReplaceAllStringFunc(src, func(raw string) string {
+		parsed := re_includeTag.FindStringSubmatch(raw)
+		includePath := parsed[1]
+
+		content, err := file_content(includePath)
+		if err != nil {
+			panic(err)
+		}
+
+		return content
+	})
+
+	return addIncluded(src)
 }
 
 func (r *Renderer) assemble(path string) (*template.Template, error) {
