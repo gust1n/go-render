@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,25 +29,7 @@ type namedTemplate struct {
 	Src  string
 }
 
-func file_content(path string) (string, error) {
-	// Read the file content of the template
-	file, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		return "", err
-	}
-	s := string(b)
-
-	if len(s) < 1 {
-		return "", ErrTmplEmpty
-	}
-
-	return s, nil
-}
-
+// add adds a template (from path) to the stack
 func (r *renderer) add(stack *[]*namedTemplate, path string) error {
 	tplSrc, err := file_content(path)
 	if err != nil {
@@ -175,10 +156,6 @@ func (r *renderer) assemble(path string) (*template.Template, error) {
 	return rootTemplate, nil
 }
 
-func generateTemplateName(base, path string) string {
-	return filepath.ToSlash(path[len(base)+1:])
-}
-
 // loadTemplates loads and parses all *.html templates in specified directory.
 // It also handles the recursive scan up the "extend"-chain
 func (r *renderer) loadTemplates() error {
@@ -213,27 +190,4 @@ func new(basePath string) *renderer {
 		basePath:  basePath,
 		templates: make(map[string]*template.Template),
 	}
-}
-
-// Load prepares and parses all templates from the passed basePath
-func Load(basePath string) (map[string]*template.Template, error) {
-	rnd := new(basePath)
-	if err := rnd.loadTemplates(); err != nil {
-		return nil, err
-	}
-
-	return rnd.templates, nil
-}
-
-// LoadWithFuncMap prepares and parses all templates from the passed basePath and injects
-// a custom template.FuncMap into each template
-func LoadWithFuncMap(basePath string, funcMap template.FuncMap) (map[string]*template.Template, error) {
-	rnd := new(basePath)
-	rnd.funcMap = funcMap
-
-	if err := rnd.loadTemplates(); err != nil {
-		return nil, err
-	}
-
-	return rnd.templates, nil
 }
