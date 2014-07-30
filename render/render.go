@@ -1,16 +1,14 @@
 package render
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"text/template"
 )
 
 var re_extends *regexp.Regexp = regexp.MustCompile("{{ extends [\"']?([^'\"}']*)[\"']? }}")
@@ -21,9 +19,9 @@ var re_includeTag *regexp.Regexp = regexp.MustCompile("{{ ?include \"([^\"]*)\" 
 var ErrTmplNotFound = errors.New("template not found")
 var ErrTmplEmpty = errors.New("template is empty")
 
-type Renderer struct {
+type renderer struct {
 	templates map[string]*template.Template
-	FuncMap   map[string]interface{} //template.FuncMap
+	funcMap   map[string]interface{} //template.funcMap
 }
 
 type namedTemplate struct {
@@ -50,7 +48,7 @@ func file_content(path string) (string, error) {
 	return s, nil
 }
 
-func (r *Renderer) add(stack *[]*namedTemplate, path string) error {
+func (r *renderer) add(stack *[]*namedTemplate, path string) error {
 	tplSrc, err := file_content(path)
 	if err != nil {
 		return err
@@ -102,7 +100,7 @@ func addIncluded(src string) string {
 	return addIncluded(src)
 }
 
-func (r *Renderer) assemble(path string) (*template.Template, error) {
+func (r *renderer) assemble(path string) (*template.Template, error) {
 	// The stack holds our template extend stack
 	stack := []*namedTemplate{}
 
@@ -164,8 +162,8 @@ func (r *Renderer) assemble(path string) (*template.Template, error) {
 			currentTmpl = rootTemplate.New(namedTemplate.Name)
 		}
 
-		// Add our custom FuncMap (must be added before parsing)
-		currentTmpl.Funcs(r.FuncMap)
+		// Add our custom funcMap (must be added before parsing)
+		currentTmpl.Funcs(r.funcMap)
 
 		_, err := currentTmpl.Parse(namedTemplate.Src)
 		if err != nil {
@@ -180,9 +178,9 @@ func generateTemplateName(base, path string) string {
 	return filepath.ToSlash(path[len(base)+1:])
 }
 
-// LoadTemplates loads and parses all *.html templates in specified directory.
+// loadTemplates loads and parses all *.html templates in specified directory.
 // It also handles the recursive scan up the "extend"-chain
-func (r *Renderer) LoadTemplates(dirPath string) error {
+func (r *renderer) loadTemplates(dirPath string) error {
 	if r.templates == nil {
 		r.templates = make(map[string]*template.Template)
 	}
@@ -209,23 +207,31 @@ func (r *Renderer) LoadTemplates(dirPath string) error {
 	return nil
 }
 
-// ExecuteTemplate tries to inject the passed data into passed template name and write to the ResponseWriter
-func (r *Renderer) ExecuteTemplate(rw http.ResponseWriter, name string, data interface{}) error {
-	if _, found := r.templates[name]; !found {
-		return ErrTmplNotFound
-	}
-
-	// Always (try to) write to buffer first to properly catch errors
-	buf := new(bytes.Buffer)
-	if err := r.templates[name].Execute(buf, data); err != nil {
-		return err
-	}
-	_, err := buf.WriteTo(rw)
-	return err
-}
-
-func New() *Renderer {
-	return &Renderer{
+func new() *renderer {
+	return &renderer{
 		templates: make(map[string]*template.Template),
 	}
+}
+
+// Load prepares and parses all templates from the passed basePath
+func Load(path string) (map[string]*template.Template, error) {
+	rnd := new()
+	if err := rnd.loadTemplates(path); err != nil {
+		return nil, err
+	}
+
+	return rnd.templates, nil
+}
+
+// LoadWithFuncMap prepares and parses all templates from the passed basePath and injects
+// a custom template.FuncMap into each template
+func LoadWithFuncMap(path string, funcMap template.FuncMap) (map[string]*template.Template, error) {
+	rnd := new()
+	rnd.funcMap = funcMap
+
+	if err := rnd.loadTemplates(path); err != nil {
+		return nil, err
+	}
+
+	return rnd.templates, nil
 }
