@@ -48,6 +48,34 @@ func (r *renderer) add(stack *[]*namedTemplate, path string) error {
 		tplSrc = re_extends.ReplaceAllString(tplSrc, "")
 	}
 
+	for _, raw := range re_templateTag.FindAllString(tplSrc, -1) {
+		parsed := re_templateTag.FindStringSubmatch(raw)
+		includePath := parsed[1]
+		if strings.Contains(includePath, ".html") {
+			// Make sure template is not already included
+			alreadyIncluded := false
+			for _, t := range *stack {
+				if t.Name == includePath {
+					alreadyIncluded = true
+					break
+				}
+			}
+			if alreadyIncluded {
+				continue
+			}
+
+			includedTplSrc, err := file_content(filepath.Join(r.basePath, includePath))
+			if err != nil {
+				return err
+			}
+			// Add template to the stack
+			*stack = append((*stack), &namedTemplate{
+				Name: includePath,
+				Src:  includedTplSrc,
+			})
+		}
+	}
+
 	// Add included files
 	tplSrc = r.addIncluded(tplSrc)
 
@@ -128,6 +156,8 @@ func (r *renderer) assemble(path string) (*template.Template, error) {
 			}
 			if ok {
 				return fmt.Sprintf(`{{ template "%s" %s }}`, replacedName, dot)
+			} else if strings.Contains(origName, ".html") {
+				return fmt.Sprintf(`{{ template "%s" %s }}`, origName, dot)
 			} else {
 				return ""
 			}
