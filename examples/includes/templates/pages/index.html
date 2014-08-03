@@ -1,8 +1,6 @@
-{{ extends "base.html" }}
+{{ template "base.html" }}
 
-{{/* try removing this block to see that body includes a default error page */}}
 {{ define "body" }}
 <h1>Index page</h1>
-<p>Extending the fullwidth template</p>
-{{ include "includes/widgets/signup.html" }}
+{{ template "includes/widgets/signup.html" }}
 {{ end }}

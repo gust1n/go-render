@@ -1,6 +1,7 @@
 package render
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -23,7 +24,7 @@ func file_content(path string) (string, error) {
 	s := string(b)
 
 	if len(s) < 1 {
-		return "", ErrTmplEmpty
+		return "", errors.New("render: template file is empty")
 	}
 
 	return s, nil

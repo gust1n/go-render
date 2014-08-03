@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>{{ if .Title }}{{ .Title }} - {{ end }} Go templates extends!</title>
-	{{ template "head" . }}
+	<title>{{ if .Title }}{{ .Title }} - {{ end }} Go templates include!</title>
 </head>
 <body>
 {{ template "body" . }}
 
 </body>
 </html>
-
-{{/* default body */}}
-{{ define "body" }}
-{{ include "includes/error/500.html" }}
-{{ end }}
