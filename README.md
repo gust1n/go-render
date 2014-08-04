@@ -23,11 +23,12 @@ A convenience template loader for stdlib's html/template. Takes away the pain of
 Check out the [examples](https://github.com/gust1n/go-render/tree/master/examples) folder for some examples
 
 ### Extends
-Just use the standard template keyword with a *.html file path
+Just use the standard template keyword with a *.html file path.
+REMEMBER to pass the context to the parent template with the trailing dot (. }}).
 
 index.html
 	
-	{{ template "templates/layouts/fullwidth.html" }}
+	{{ template "templates/layouts/fullwidth.html" . }}
 
 	{{ define "content" }}
 	    content of index to be inserted into the fullwidth template
@@ -61,7 +62,7 @@ base.html
 
 profile.html
 
-    {{ template "templates/base.html" }}
+    {{ template "templates/base.html" . }}
     {{ define "title" }}Hello World{{ end }}
 
 This would produce panic in std lib parsing but now it works by simply renaming the define's further down the chain not to interrupt the most specific one.

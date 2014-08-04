@@ -147,6 +147,7 @@ func add(path string) error {
 			regularTemplateDefs = append(regularTemplateDefs, templatePath)
 			continue
 		}
+
 		// Add this template and continue looking for more template blocks
 		add(filepath.Join(basePath, templatePath))
 	}
