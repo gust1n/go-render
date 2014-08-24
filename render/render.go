@@ -102,8 +102,9 @@ func loadTemplates(funcMap template.FuncMap) (map[string]*template.Template, err
 
 		templates[generateTemplateName(basePath, path)] = baseTmpl
 
-		// Make sure we empty the cache between runs
+		// Make sure we empty the shared caches between runs
 		cache = cache[0:0]
+		regularTemplateDefs = regularTemplateDefs[0:0]
 
 		return nil
 	})
